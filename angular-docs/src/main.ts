@@ -1,4 +1,4 @@
-import { ApplicationConfig, InjectionToken, Type, effect, inject, signal, ChangeDetectionStrategy, Component, HostListener } from '@angular/core';
+import { ApplicationConfig, InjectionToken, Type, effect, inject, signal, ChangeDetectionStrategy, Component, HostListener, isDevMode } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { Routes, provideRouter, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { provideAnimations } from '@angular/platform-browser/animations';
@@ -13,6 +13,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { provideStore, createAction, createReducer, on, props, createFeatureSelector, createSelector } from '@ngrx/store';
 import { provideEffects, Actions, createEffect, ofType } from '@ngrx/effects';
 import { provideRouterStore, routerNavigatedAction } from '@ngrx/router-store';
+import { provideStoreDevtools } from '@ngrx/store-devtools';
 import { filter, map, tap, withLatestFrom } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { environment } from './environments/environment';
@@ -236,7 +237,7 @@ class DocShellComponent {
   docsBySection = (s: string) => this.registry.bySection(s);
 
   tocWidth = signal<number>(Number(localStorage.getItem('tocWidth') ?? 320));
-  tocCollapsed = signal<boolean>(false);
+  tocCollapsed = signal<boolean>(initialState.tocCollapsed);
   private resizing = false;
 
   currentId = () => this._currentId;
@@ -390,6 +391,7 @@ const appConfig: ApplicationConfig = {
     provideAnimations(),
     provideStore({ docs: docsReducer }),
     provideEffects(DocsEffects),
+    ...(isDevMode() ? [provideStoreDevtools({ maxAge: 25, logOnly: !isDevMode() })] : []),
     { provide: ENV_CONFIG, useValue: environment },
     RegistryService
   ]
