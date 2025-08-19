@@ -53,6 +53,12 @@ async def get_status_checks():
     status_checks = await db.status_checks.find().to_list(1000)
     return [StatusCheck(**status_check) for status_check in status_checks]
 
+
+# Serve Angular docs static build under /api/docapp
+angular_docs_dir = Path('/app/angular-docs/dist/angular-docs')
+if angular_docs_dir.exists():
+    app.mount('/api/docapp', StaticFiles(directory=str(angular_docs_dir), html=True), name='angular-docs')
+
 # Include the router in the main app
 app.include_router(api_router)
 
