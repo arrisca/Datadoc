@@ -158,6 +158,9 @@ class HeaderComponent {
   config = inject(ENV_CONFIG);
   private store = inject(Store);
   toggle() { this.store.dispatch(toggleToc()); }
+  constructor() {
+    this.store.select(selectTocCollapsed).subscribe(v => localStorage.setItem('tocCollapsed', String(v)));
+  }
 }
 
 /******************************
