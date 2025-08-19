@@ -51,3 +51,8 @@ That is it. The TOC entry, routing (/docs/my-topic), highlight, and Prev/Next ar
 - Change detection is OnPush everywhere for performance.
 - TOC width persists (drag the vertical handle). Use the header left menu button to collapse/expand the TOC.
 - A11y: aria-current on active TOC item, focus moves to doc heading on navigation.
+
+Additional sample docs included:
+- Configuration
+- Validation
+- Troubleshooting
