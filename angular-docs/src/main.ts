@@ -170,7 +170,7 @@ class HeaderComponent {
 @Component({
   selector: 'app-doc-shell',
   standalone: true,
-  imports: [CommonModule, RouterLink, RouterOutlet, MatSidenavModule, MatListModule, MatButtonModule, MatIconModule, MatExpansionModule, MatDividerModule, NgIf, NgFor],
+  imports: [CommonModule, RouterLink, RouterOutlet, MatSidenavModule, MatListModule, MatButtonModule, MatIconModule, MatExpansionModule, MatDividerModule, NgIf, NgFor, HeaderComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: [`
     :host { display:block; }
