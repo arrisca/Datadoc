@@ -1,9 +1,8 @@
-import { ApplicationConfig, EnvironmentInjector, InjectionToken, Provider, Type, computed, effect, inject, isDevMode, signal } from '@angular/core';
+import { ApplicationConfig, InjectionToken, Type, effect, inject, signal, ChangeDetectionStrategy, Component, HostListener } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
-import { RouterModule, Routes, provideRouter, Router, ActivatedRoute, RouterLink, RouterOutlet } from '@angular/router';
+import { Routes, provideRouter, Router, RouterLink, RouterOutlet } from '@angular/router';
 import { provideAnimations } from '@angular/platform-browser/animations';
-import { ChangeDetectionStrategy, Component, HostListener } from '@angular/core';
-import { CommonModule, NgOptimizedImage, NgTemplateOutlet, NgIf, NgFor, AsyncPipe } from '@angular/common';
+import { CommonModule, NgIf, NgFor, NgOptimizedImage } from '@angular/common';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -11,12 +10,12 @@ import { MatSidenavModule } from '@angular/material/sidenav';
 import { MatListModule } from '@angular/material/list';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatDividerModule } from '@angular/material/divider';
-import { MatTooltipModule } from '@angular/material/tooltip';
 import { provideStore, createAction, createReducer, on, props, createFeatureSelector, createSelector } from '@ngrx/store';
 import { provideEffects, Actions, createEffect, ofType } from '@ngrx/effects';
 import { provideRouterStore, routerNavigatedAction } from '@ngrx/router-store';
 import { filter, map, tap, withLatestFrom } from 'rxjs/operators';
-import { Observable } from 'rxjs';
+import { Store } from '@ngrx/store';
+import { environment } from './environments/environment';
 
 /******************************
  * Configuration + Contracts
@@ -39,30 +38,16 @@ export const DOCS = new InjectionToken<DocMeta[]>('DOCS'); // multi
 class RegistryService {
   private allDocs = inject(DOCS, { optional: true }) ?? [];
 
-  // Ordered by section then order
   readonly ordered: DocMeta[] = [...this.allDocs].sort((a, b) =>
     a.section === b.section ? a.order - b.order : a.section.localeCompare(b.section)
   );
-
   readonly byId = new Map(this.ordered.map((d) => [d.id, d] as const));
 
-  sections(): string[] {
-    return Array.from(new Set(this.ordered.map((d) => d.section)));
-  }
-
-  bySection(section: string): DocMeta[] {
-    return this.ordered.filter((d) => d.section === section);
-  }
-
+  sections(): string[] { return Array.from(new Set(this.ordered.map((d) => d.section))); }
+  bySection(section: string): DocMeta[] { return this.ordered.filter((d) => d.section === section); }
   first(): DocMeta | undefined { return this.ordered[0]; }
-  nextOf(id: string): DocMeta | undefined {
-    const idx = this.ordered.findIndex((d) => d.id === id);
-    return idx >= 0 && idx + 1 < this.ordered.length ? this.ordered[idx + 1] : undefined;
-  }
-  prevOf(id: string): DocMeta | undefined {
-    const idx = this.ordered.findIndex((d) => d.id === id);
-    return idx > 0 ? this.ordered[idx - 1] : undefined;
-  }
+  nextOf(id: string): DocMeta | undefined { const i = this.ordered.findIndex(d => d.id === id); return i >= 0 && i + 1 < this.ordered.length ? this.ordered[i + 1] : undefined; }
+  prevOf(id: string): DocMeta | undefined { const i = this.ordered.findIndex(d => d.id === id); return i > 0 ? this.ordered[i - 1] : undefined; }
 }
 
 /******************************
@@ -105,12 +90,11 @@ const docsReducer = createReducer(
 
 const selectFeature = createFeatureSelector<DocsState>('docs');
 const selectDocsOrdered = createSelector(selectFeature, (s) => s.docs);
-const selectById = createSelector(selectFeature, (s) => s.byId);
 const selectCurrentId = createSelector(selectFeature, (s) => s.currentId);
-const selectCurrentDoc = createSelector(selectDocsOrdered, selectCurrentId, (docs, id) => docs.find(d => d.id === id) ?? null);
 const selectCurrentIndex = createSelector(selectDocsOrdered, selectCurrentId, (docs, id) => docs.findIndex(d => d.id === id));
 const selectPrevDoc = createSelector(selectDocsOrdered, selectCurrentIndex, (docs, i) => i > 0 ? docs[i - 1] : null);
 const selectNextDoc = createSelector(selectDocsOrdered, selectCurrentIndex, (docs, i) => i >= 0 && i + 1 < docs.length ? docs[i + 1] : null);
+const selectTocCollapsed = createSelector(selectFeature, (s) => s.tocCollapsed);
 
 class DocsEffects {
   private actions$ = inject(Actions);
@@ -118,39 +102,29 @@ class DocsEffects {
   private registry = inject(RegistryService);
   private store = inject(Store);
 
-  // Sync route -> current doc
   routeToDoc$ = createEffect(() => this.actions$.pipe(
     ofType(routerNavigatedAction),
     map(() => {
       const url = this.router.url;
-      const match = url.match(/\/docs\/([^/?#]+)/);
-      const id = match?.[1];
+      const id = url.match(/\/docs\/([^/?#]+)/)?.[1];
       return id ?? this.registry.first()?.id ?? null;
     }),
     filter((id): id is string => !!id),
     map((id) => enterDoc({ id }))
   ));
 
-  // Navigate next
   navNext$ = createEffect(() => this.actions$.pipe(
     ofType(navigateNext),
     withLatestFrom(this.store.select(selectNextDoc)),
-    tap(([_, next]) => {
-      if (next) this.router.navigate(['/docs', next.id]);
-    })
+    tap(([_, next]) => { if (next) this.router.navigate(['/docs', next.id]); })
   ), { dispatch: false });
 
-  // Navigate prev
   navPrev$ = createEffect(() => this.actions$.pipe(
     ofType(navigatePrev),
     withLatestFrom(this.store.select(selectPrevDoc)),
-    tap(([_, prev]) => {
-      if (prev) this.router.navigate(['/docs', prev.id]);
-    })
+    tap(([_, prev]) => { if (prev) this.router.navigate(['/docs', prev.id]); })
   ), { dispatch: false });
 }
-
-import { Store } from '@ngrx/store';
 
 /******************************
  * Header Component
@@ -158,11 +132,14 @@ import { Store } from '@ngrx/store';
 @Component({
   selector: 'app-header',
   standalone: true,
-  imports: [CommonModule, MatToolbarModule, MatButtonModule, MatIconModule],
+  imports: [CommonModule, MatToolbarModule, MatButtonModule, MatIconModule, NgOptimizedImage],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
   <mat-toolbar color="primary" style="position:fixed;top:0;left:0;right:0;z-index:1000;background: var(--app-primary); color: var(--app-primary-contrast);">
     <div style="display:flex;align-items:center;gap:12px;width:100%;">
+      <button mat-icon-button (click)="toggle()" aria-label="Toggle table of contents" style="color:var(--app-primary-contrast)">
+        <mat-icon>menu</mat-icon>
+      </button>
       <img [ngSrc]="config.logoUrl" alt="Company Logo" width="28" height="28" priority style="border-radius:6px;" />
       <span style="font-weight:600;letter-spacing:0.2px;">On-Prem Docs</span>
       <span style="flex:1"></span>
@@ -177,6 +154,8 @@ import { Store } from '@ngrx/store';
 })
 class HeaderComponent {
   config = inject(ENV_CONFIG);
+  private store = inject(Store);
+  toggle() { this.store.dispatch(toggleToc()); }
 }
 
 /******************************
@@ -205,18 +184,20 @@ class HeaderComponent {
     <app-header />
     <div style="height:64px"></div>
 
-    <div class="layout">
-      <nav class="toc" [style.width.px]="tocWidth()" aria-label="Table of contents">
-        <div class="section" *ngFor="let section of sections()">
-          <div class="section-title">{{ section }}</div>
-          <a *ngFor="let d of docsBySection(section); trackBy: trackById"
-             [routerLink]="['/docs', d.id]"
-             [attr.aria-current]="currentId() === d.id ? 'page' : null">
-            {{ d.title }}
-          </a>
-        </div>
-      </nav>
-      <div class="resizer" (mousedown)="startResize($event)"></div>
+    <div class="layout" [style.gridTemplateColumns]="tocCollapsed() ? '0 1fr' : 'var(--toc-width, 320px) 1fr'">
+      <ng-container *ngIf="!tocCollapsed()">
+        <nav class="toc" [style.width.px]="tocWidth()" aria-label="Table of contents">
+          <div class="section" *ngFor="let section of sections()">
+            <div class="section-title">{{ section }}</div>
+            <a *ngFor="let d of docsBySection(section); trackBy: trackById"
+              [routerLink]="['/docs', d.id]"
+              [attr.aria-current]="currentId() === d.id ? 'page' : null">
+              {{ d.title }}
+            </a>
+          </div>
+        </nav>
+        <div class="resizer" (mousedown)="startResize($event)"></div>
+      </ng-container>
 
       <main class="content">
         <div class="doc-container">
@@ -227,13 +208,13 @@ class HeaderComponent {
 
           <div class="bottom-nav">
             <button mat-stroked-button color="primary" *ngIf="prevDoc()" (click)="goPrev()" aria-label="Previous: {{ prevDoc()?.title }}">
-              <span class="material-icons" aria-hidden="true">arrow_back</span>
+              <mat-icon aria-hidden="true">arrow_back</mat-icon>
               <span style="margin-left:8px">Prev: {{ prevDoc()?.title }}</span>
             </button>
             <span></span>
             <button mat-flat-button color="primary" *ngIf="nextDoc()" (click)="goNext()" aria-label="Next: {{ nextDoc()?.title }}" style="background: var(--app-primary); color: var(--app-primary-contrast);">
               <span style="margin-right:8px">Next: {{ nextDoc()?.title }}</span>
-              <span class="material-icons" aria-hidden="true">arrow_forward</span>
+              <mat-icon aria-hidden="true">arrow_forward</mat-icon>
             </button>
           </div>
         </div>
@@ -250,6 +231,7 @@ class DocShellComponent {
   docsBySection = (s: string) => this.registry.bySection(s);
 
   tocWidth = signal<number>(Number(localStorage.getItem('tocWidth') ?? 320));
+  tocCollapsed = signal<boolean>(false);
   private resizing = false;
 
   currentId = () => this._currentId;
@@ -257,7 +239,6 @@ class DocShellComponent {
 
   currentDoc = () => (this._currentId ? this.registry.byId.get(this._currentId) ?? null : null);
   currentComponent = () => (this.currentDoc()?.component ?? null);
-
   prevDoc = () => (this._currentId ? this.registry.prevOf(this._currentId) ?? null : null);
   nextDoc = () => (this._currentId ? this.registry.nextOf(this._currentId) ?? null : null);
 
@@ -266,6 +247,8 @@ class DocShellComponent {
       this._currentId = id;
       setTimeout(() => document.getElementById('doc-heading')?.focus(), 0);
     });
+
+    this.store.select(selectTocCollapsed).subscribe(v => this.tocCollapsed.set(v));
 
     effect(() => {
       const w = this.tocWidth();
@@ -303,11 +286,8 @@ class DocShellComponent {
 
   @HostListener('document:keydown', ['$event'])
   onKeydown(e: KeyboardEvent) {
-    if (e.key === 'ArrowLeft' || e.key === '[') {
-      this.goPrev();
-    } else if (e.key === 'ArrowRight' || e.key === ']') {
-      this.goNext();
-    }
+    if (e.key === 'ArrowLeft' || e.key === '[') { this.goPrev(); }
+    else if (e.key === 'ArrowRight' || e.key === ']') { this.goNext(); }
   }
 }
 
@@ -319,9 +299,7 @@ class DocShellComponent {
   standalone: true,
   imports: [CommonModule, RouterOutlet, DocShellComponent, HeaderComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <router-outlet></router-outlet>
-  `
+  template: `<router-outlet></router-outlet>`
 })
 class AppComponent {}
 
@@ -332,7 +310,7 @@ class AppComponent {}
   selector: 'doc-introduction',
   standalone: true,
   imports: [CommonModule],
-  providers: [{ provide: DOCS, useValue: { id: 'introduction', title: 'Introduction', section: 'Getting Started', order: 1 }, multi: true }],
+  providers: [{ provide: DOCS, useValue: { id: 'introduction', title: 'Introduction', section: 'Getting Started', order: 1, component: IntroductionDocComponent }, multi: true }],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <p>Welcome to the on-prem deployment documentation. This guide helps you plan, install, and operate the cluster in secure environments.</p>
@@ -350,7 +328,7 @@ class IntroductionDocComponent {}
   selector: 'doc-prerequisites',
   standalone: true,
   imports: [CommonModule],
-  providers: [{ provide: DOCS, useValue: { id: 'prerequisites', title: 'Prerequisites', section: 'Getting Started', order: 2 }, multi: true }],
+  providers: [{ provide: DOCS, useValue: { id: 'prerequisites', title: 'Prerequisites', section: 'Getting Started', order: 2, component: PrerequisitesDocComponent }, multi: true }],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <p>Ensure your environment meets the following requirements before installation.</p>
@@ -374,7 +352,7 @@ class PrerequisitesDocComponent {}
   selector: 'doc-installation',
   standalone: true,
   imports: [CommonModule],
-  providers: [{ provide: DOCS, useValue: { id: 'installation', title: 'Installation', section: 'Getting Started', order: 3 }, multi: true }],
+  providers: [{ provide: DOCS, useValue: { id: 'installation', title: 'Installation', section: 'Getting Started', order: 3, component: InstallationDocComponent }, multi: true }],
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <p>Follow these steps to install the platform on-prem.</p>
@@ -407,21 +385,8 @@ const appConfig: ApplicationConfig = {
     provideAnimations(),
     provideStore({ docs: docsReducer }),
     provideEffects(DocsEffects),
-    { provide: ENV_CONFIG, useValue: {
-      logoUrl: 'https://avatars.githubusercontent.com/u/131936074?s=200&v=4',
-      headerLinks: [
-        { label: 'Repository', url: '#' },
-        { label: 'Nexus', url: '#' },
-        { label: 'Cluster', url: '#' },
-        { label: 'Permission', url: '#' },
-        { label: 'Announcement', url: '#' },
-        { label: 'Help', url: '#' }
-      ] as HeaderLink[]
-    }},
-    RegistryService,
-    { provide: DOCS, useValue: { id: 'introduction', title: 'Introduction', section: 'Getting Started', order: 1, component: IntroductionDocComponent }, multi: true },
-    { provide: DOCS, useValue: { id: 'prerequisites', title: 'Prerequisites', section: 'Getting Started', order: 2, component: PrerequisitesDocComponent }, multi: true },
-    { provide: DOCS, useValue: { id: 'installation', title: 'Installation', section: 'Getting Started', order: 3, component: InstallationDocComponent }, multi: true }
+    { provide: ENV_CONFIG, useValue: environment },
+    RegistryService
   ]
 };
 
