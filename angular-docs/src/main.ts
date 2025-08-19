@@ -65,7 +65,7 @@ const initialState: DocsState = {
   docs: [],
   byId: {},
   currentId: null,
-  tocCollapsed: false,
+  tocCollapsed: (localStorage.getItem('tocCollapsed') ?? 'false') === 'true',
   tocWidth: Number(localStorage.getItem('tocWidth') ?? 320)
 };
 
