@@ -213,7 +213,7 @@ class HeaderComponent {
           </ng-container>
 
           <div class="bottom-nav">
-            <button mat-stroked-button color="primary" *ngIf="prevDoc()" (click)="goPrev()" aria-label="Previous: {{ prevDoc()?.title }}">
+            <button mat-stroked-button color="primary" *ngIf="prevDoc()" (click)="goPrev()" [attr.aria-label]="'Previous: ' + (prevDoc()?.title || '')">
               <mat-icon aria-hidden="true">arrow_back</mat-icon>
               <span style="margin-left:8px">Prev: {{ prevDoc()?.title }}</span>
             </button>
