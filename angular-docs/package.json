@@ -39,6 +39,7 @@
     "@angular-eslint/template-parser": "^18.2.0",
     "cypress": "^13.9.0",
     "eslint": "^9.7.0",
-    "typescript": "~5.4.5"
+    "typescript": "~5.4.5",
+    "sass": "^1.77.0"
   }
 }
