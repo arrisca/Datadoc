@@ -74,6 +74,7 @@ const enterDoc = createAction('[Docs] Enter Doc', props<{ id: string }>());
 const navigateNext = createAction('[Docs] Navigate Next');
 const navigatePrev = createAction('[Docs] Navigate Prev');
 const toggleToc = createAction('[Docs] Toggle TOC');
+const setTocCollapsed = createAction('[Docs] Set TOC Collapsed', props<{ collapsed: boolean }>());
 const setTocWidth = createAction('[Docs] Set TOC Width', props<{ width: number }>());
 
 const docsReducer = createReducer(
