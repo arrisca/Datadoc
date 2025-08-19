@@ -7,7 +7,7 @@
     "start": "ng serve",
     "build": "ng build",
     "test": "ng test",
-    "lint": "ng lint",
+    "lint": "eslint \"src/**/*.{ts,html}\" --max-warnings=0",
     "e2e": "ng e2e"
   },
   "dependencies": {
@@ -24,6 +24,7 @@
     "@ngrx/effects": "^18.0.0",
     "@ngrx/router-store": "^18.0.0",
     "@ngrx/store": "^18.0.0",
+    "@ngrx/store-devtools": "^18.0.0",
     "rxjs": "^7.8.1",
     "tslib": "^2.6.2",
     "zone.js": "~0.14.5"
@@ -37,9 +38,19 @@
     "@angular-eslint/eslint-plugin-template": "^18.2.0",
     "@angular-eslint/schematics": "^18.2.0",
     "@angular-eslint/template-parser": "^18.2.0",
+    "@types/jasmine": "^5.1.6",
+    "@types/node": "^20.11.16",
+    "@typescript-eslint/eslint-plugin": "^8.7.0",
+    "@typescript-eslint/parser": "^8.7.0",
     "cypress": "^13.9.0",
     "eslint": "^9.7.0",
-    "typescript": "~5.4.5",
-    "sass": "^1.77.0"
+    "jasmine-core": "^5.2.0",
+    "karma": "^6.4.4",
+    "karma-chrome-launcher": "^3.2.0",
+    "karma-coverage": "^2.2.0",
+    "karma-jasmine": "^5.1.0",
+    "karma-jasmine-html-reporter": "^2.1.0",
+    "sass": "^1.77.0",
+    "typescript": "~5.4.5"
   }
 }

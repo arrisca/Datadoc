@@ -25,10 +25,10 @@
             "main": "src/main.ts",
             "polyfills": ["zone.js"],
             "tsConfig": "tsconfig.json",
-            "inlineStyleLanguage": "css",
+            "inlineStyleLanguage": "scss",
             "assets": ["src/assets", "src/favicon.ico"],
             "styles": [
-              "node_modules/@angular/material/prebuilt-themes/indigo-pink.css",
+              "src/theme.scss",
               "src/styles.css"
             ],
             "scripts": []
@@ -53,9 +53,10 @@
         "test": {
           "builder": "@angular-devkit/build-angular:karma",
           "options": {
-            "polyfills": ["zone.js"],
-            "tsConfig": "tsconfig.json",
-            "main": "src/main.ts"
+            "polyfills": ["zone.js", "zone.js/testing"],
+            "tsConfig": "tsconfig.spec.json",
+            "main": "src/test.ts",
+            "karmaConfig": "karma.conf.js"
           }
         }
       }
