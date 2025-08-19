@@ -218,7 +218,7 @@ class HeaderComponent {
               <span style="margin-left:8px">Prev: {{ prevDoc()?.title }}</span>
             </button>
             <span></span>
-            <button mat-flat-button color="primary" *ngIf="nextDoc()" (click)="goNext()" aria-label="Next: {{ nextDoc()?.title }}" style="background: var(--app-primary); color: var(--app-primary-contrast);">
+            <button mat-flat-button color="primary" *ngIf="nextDoc()" (click)="goNext()" [attr.aria-label]="'Next: ' + (nextDoc()?.title || '')" style="background: var(--app-primary); color: var(--app-primary-contrast);">
               <span style="margin-right:8px">Next: {{ nextDoc()?.title }}</span>
               <mat-icon aria-hidden="true">arrow_forward</mat-icon>
             </button>
