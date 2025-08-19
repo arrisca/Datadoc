@@ -404,7 +404,7 @@ const appConfig: ApplicationConfig = {
   providers: [
     provideRouter(routes),
     provideRouterStore(),
-    BrowserAnimationsModule,
+    provideAnimations(),
     provideStore({ docs: docsReducer }),
     provideEffects(DocsEffects),
     { provide: ENV_CONFIG, useValue: {
