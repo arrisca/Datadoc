@@ -372,6 +372,61 @@ class PrerequisitesDocComponent {}
 })
 class InstallationDocComponent {}
 
+
+@Component({
+  selector: 'doc-configuration',
+  standalone: true,
+  imports: [CommonModule],
+  providers: [{ provide: DOCS, useValue: { id: 'configuration', title: 'Configuration', section: 'Getting Started', order: 4, component: ConfigurationDocComponent }, multi: true }],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <p>Configure your deployment after installation.</p>
+    <h2>Core Settings</h2>
+    <ul>
+      <li>Cluster name, domain, and time zone</li>
+      <li>TLS certificates and key stores</li>
+      <li>Storage classes and backup locations</li>
+    </ul>
+  `
+})
+class ConfigurationDocComponent {}
+
+@Component({
+  selector: 'doc-validation',
+  standalone: true,
+  imports: [CommonModule],
+  providers: [{ provide: DOCS, useValue: { id: 'validation', title: 'Validation', section: 'Getting Started', order: 5, component: ValidationDocComponent }, multi: true }],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <p>Validate the deployment to ensure the cluster is healthy and ready.</p>
+    <h2>Validation Checklist</h2>
+    <ol>
+      <li>All pods are running and ready</li>
+      <li>Ingress and DNS resolve correctly</li>
+      <li>License and permissions validated</li>
+    </ol>
+  `
+})
+class ValidationDocComponent {}
+
+@Component({
+  selector: 'doc-troubleshooting',
+  standalone: true,
+  imports: [CommonModule],
+  providers: [{ provide: DOCS, useValue: { id: 'troubleshooting', title: 'Troubleshooting', section: 'Getting Started', order: 6, component: TroubleshootingDocComponent }, multi: true }],
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  template: `
+    <p>Common issues and how to resolve them.</p>
+    <h2>Tips</h2>
+    <ul>
+      <li>Check logs: kubectl logs -n <namespace> <pod></li>
+      <li>Verify secrets and configmaps</li>
+      <li>Confirm node resources and network policies</li>
+    </ul>
+  `
+})
+class TroubleshootingDocComponent {}
+
 /******************************
  * Routes
  ******************************/
