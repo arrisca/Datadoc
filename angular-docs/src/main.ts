@@ -86,6 +86,7 @@ const docsReducer = createReducer(
   })),
   on(enterDoc, (state, { id }) => ({ ...state, currentId: id })),
   on(toggleToc, (state) => ({ ...state, tocCollapsed: !state.tocCollapsed })),
+  on(setTocCollapsed, (state, { collapsed }) => ({ ...state, tocCollapsed: collapsed })),
   on(setTocWidth, (state, { width }) => ({ ...state, tocWidth: width }))
 );
 
