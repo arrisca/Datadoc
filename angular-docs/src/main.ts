@@ -419,7 +419,7 @@ class ValidationDocComponent {}
     <p>Common issues and how to resolve them.</p>
     <h2>Tips</h2>
     <ul>
-      <li>Check logs: kubectl logs -n <namespace> <pod></li>
+      <li>Check logs: kubectl logs -n &lt;namespace&gt; &lt;pod&gt;</li>
       <li>Verify secrets and configmaps</li>
       <li>Confirm node resources and network policies</li>
     </ul>
