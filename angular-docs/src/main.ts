@@ -1,7 +1,7 @@
 import { ApplicationConfig, EnvironmentInjector, InjectionToken, Provider, Type, computed, effect, inject, isDevMode, signal } from '@angular/core';
 import { bootstrapApplication } from '@angular/platform-browser';
 import { RouterModule, Routes, provideRouter, Router, ActivatedRoute, RouterLink, RouterOutlet } from '@angular/router';
-import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
+import { provideAnimations } from '@angular/platform-browser/animations';
 import { ChangeDetectionStrategy, Component, HostListener } from '@angular/core';
 import { CommonModule, NgOptimizedImage, NgTemplateOutlet, NgIf, NgFor, AsyncPipe } from '@angular/common';
 import { MatToolbarModule } from '@angular/material/toolbar';
