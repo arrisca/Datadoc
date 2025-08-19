@@ -116,6 +116,7 @@ class DocsEffects {
   private actions$ = inject(Actions);
   private router = inject(Router);
   private registry = inject(RegistryService);
+  private store = inject(Store);
 
   // Sync route -> current doc
   routeToDoc$ = createEffect(() => this.actions$.pipe(
@@ -133,7 +134,7 @@ class DocsEffects {
   // Navigate next
   navNext$ = createEffect(() => this.actions$.pipe(
     ofType(navigateNext),
-    withLatestFrom(storeSelect(selectNextDoc)),
+    withLatestFrom(this.store.select(selectNextDoc)),
     tap(([_, next]) => {
       if (next) this.router.navigate(['/docs', next.id]);
     })
@@ -142,15 +143,14 @@ class DocsEffects {
   // Navigate prev
   navPrev$ = createEffect(() => this.actions$.pipe(
     ofType(navigatePrev),
-    withLatestFrom(storeSelect(selectPrevDoc)),
+    withLatestFrom(this.store.select(selectPrevDoc)),
     tap(([_, prev]) => {
       if (prev) this.router.navigate(['/docs', prev.id]);
     })
   ), { dispatch: false });
 }
 
-// Tiny helper to use selectors inside effects without creating a facade
-import { Store, select as storeSelect } from '@ngrx/store';
+import { Store } from '@ngrx/store';
 
 /******************************
  * Header Component
@@ -264,11 +264,9 @@ class DocShellComponent {
   constructor() {
     this.store.select(selectCurrentId).subscribe((id) => {
       this._currentId = id;
-      // focus heading on change
       setTimeout(() => document.getElementById('doc-heading')?.focus(), 0);
     });
 
-    // Persist width
     effect(() => {
       const w = this.tocWidth();
       localStorage.setItem('tocWidth', String(w));
@@ -409,7 +407,6 @@ const appConfig: ApplicationConfig = {
     BrowserAnimationsModule,
     provideStore({ docs: docsReducer }),
     provideEffects(DocsEffects),
-    // Material theming uses primary color from CSS; toolbar picks color="primary"
     { provide: ENV_CONFIG, useValue: {
       logoUrl: 'https://avatars.githubusercontent.com/u/131936074?s=200&v=4',
       headerLinks: [
@@ -419,10 +416,9 @@ const appConfig: ApplicationConfig = {
         { label: 'Permission', url: '#' },
         { label: 'Announcement', url: '#' },
         { label: 'Help', url: '#' }
-      ] satisfies HeaderLink[]
+      ] as HeaderLink[]
     }},
     RegistryService,
-    // Register doc components in registry (auto)
     { provide: DOCS, useValue: { id: 'introduction', title: 'Introduction', section: 'Getting Started', order: 1, component: IntroductionDocComponent }, multi: true },
     { provide: DOCS, useValue: { id: 'prerequisites', title: 'Prerequisites', section: 'Getting Started', order: 2, component: PrerequisitesDocComponent }, multi: true },
     { provide: DOCS, useValue: { id: 'installation', title: 'Installation', section: 'Getting Started', order: 3, component: InstallationDocComponent }, multi: true }
@@ -435,7 +431,6 @@ bootstrapApplication(AppComponent, appConfig).then((ref) => {
   store.dispatch(setDocs({ docs: registry.ordered }));
 
   const router = ref.injector.get(Router);
-  // If route unknown or root, redirect to first doc
   const match = router.url.match(/\/docs\/([^/?#]+)/);
   if (!match) {
     const first = registry.first();
